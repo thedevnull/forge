@@ -170,9 +170,7 @@ public class ChangeZoneAllEffect extends SpellAbilityEffect {
             }
 
             Map<AbilityKey, Object> moveParams = AbilityKey.newMap();
-            moveParams.put(AbilityKey.LastStateBattlefield, lastStateBattlefield);
-            moveParams.put(AbilityKey.LastStateGraveyard, lastStateGraveyard);
-            moveParams.put(AbilityKey.InternalTriggerTable, triggerList);
+            AbilityKey.addCardZoneTableParams(moveParams, triggerList);
 
             if (destination == ZoneType.Battlefield) {
                 moveParams.put(AbilityKey.SimultaneousETB, cards);
@@ -199,6 +197,9 @@ public class ChangeZoneAllEffect extends SpellAbilityEffect {
                 c.setController(sa.getActivatingPlayer(), game.getNextTimestamp());
                 movedCard = game.getAction().moveToPlay(c, sa.getActivatingPlayer(), sa, moveParams);
             } else {
+                if (destination == ZoneType.Exile && !c.canExiledBy(sa, true)) {
+                    continue;
+                }
                 movedCard = game.getAction().moveTo(destination, c, libraryPos, sa, moveParams);
                 if (destination == ZoneType.Exile) {
                     handleExiledWith(movedCard, sa);

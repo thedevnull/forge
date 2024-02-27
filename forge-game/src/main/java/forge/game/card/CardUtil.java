@@ -269,6 +269,7 @@ public final class CardUtil {
         newCopy.setRenowned(in.isRenowned());
         newCopy.setSolved(in.isSolved());
         newCopy.setSuspected(in.isSuspected());
+        newCopy.setSuspectedTimestamp(in.getSuspectedTimestamp());
 
         newCopy.setColor(in.getColor().getColor());
         newCopy.setPhasedOut(in.getPhasedOut());
@@ -306,6 +307,7 @@ public final class CardUtil {
         if (in.hasChosenNumber()) {
             newCopy.setChosenNumber(in.getChosenNumber());
         }
+        newCopy.setChosenEvenOdd(in.getChosenEvenOdd());
 
         newCopy.getEtbCounters().putAll(in.getEtbCounters());
 

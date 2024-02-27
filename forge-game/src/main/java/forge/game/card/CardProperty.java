@@ -55,8 +55,12 @@ public class CardProperty {
             }
         }
 
-        // by name can also have color names, so needs to happen before colors.
-        if (property.startsWith("named")) {
+        if (property.equals("noName")) {
+            if (!card.hasNoName()) {
+                return false;
+            }
+        } else if (property.startsWith("named")) {
+            // by name can also have color names, so needs to happen before colors.
             String name = TextUtil.fastReplace(property.substring(5), ";", ","); // workaround for card name with ","
             name = TextUtil.fastReplace(name, "_", " ");
             if (!card.sharesNameWith(name)) {
@@ -1055,8 +1059,21 @@ public class CardProperty {
             if (card.getTurnInZone() != game.getPhaseHandler().getTurn()) {
                 return false;
             }
-
             if (!card.wasDiscarded()) {
+                return false;
+            }
+        } else if (property.equals("surveilledThisTurn")) {
+            if (card.getTurnInZone() != game.getPhaseHandler().getTurn()) {
+                return false;
+            }
+            if (!card.wasSurveilled()) {
+                return false;
+            }
+        } else if (property.equals("milledThisTurn")) {
+            if (card.getTurnInZone() != game.getPhaseHandler().getTurn()) {
+                return false;
+            }
+            if (!card.wasMilled()) {
                 return false;
             }
         } else if (property.startsWith("ControlledByPlayerInTheDirection")) {
@@ -1623,12 +1640,6 @@ public class CardProperty {
                     defender = ((Card) defender).getController();
                 }
                 if (!sourceController.equals(defender)) {
-                    return false;
-                }
-            }
-            if (property.equals("attackingOpponent")) {
-                Player defender = combat.getDefenderPlayerByAttacker(card);
-                if (!sourceController.isOpponentOf(defender)) {
                     return false;
                 }
             }

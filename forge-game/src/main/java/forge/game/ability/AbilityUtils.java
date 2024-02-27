@@ -1595,9 +1595,6 @@ public class AbilityUtils {
             }
             host.addRemembered(sb.toString());
         }
-
-        // make sure that when this is from a trigger LKI is updated
-        host.getGame().updateLastStateForCard(host);
     }
 
     /**
@@ -3492,6 +3489,10 @@ public class AbilityUtils {
             return doXMath(calculateAmount(source, ctb.getSVar(player.toString()), ctb), m, source, ctb);
         }
 
+        if (value.contains("AllCounters")) {
+            return doXMath(Aggregates.sum(player.getCounters().values(), Functions.identity()), m, source, ctb);
+        }
+
         if (value.contains("PoisonCounters")) {
             return doXMath(player.getPoisonCounters(), m, source, ctb);
         }
@@ -3661,6 +3662,16 @@ public class AbilityUtils {
 
         if (string.startsWith("GreatestCMC")) {
             return Aggregates.max(paidList, CardPredicates.Accessors.fnGetCmc);
+        }
+
+        if (string.equals("DifferentColorPair")) {
+            final Set<ColorSet> diffPair = new HashSet<>();
+            for (final Card card : paidList) {
+                if (card.getColor().countColors() == 2) {
+                    diffPair.add(card.getColor());
+                }
+            }
+            return diffPair.size();
         }
 
         if (string.startsWith("DifferentCMC")) {
@@ -3965,8 +3976,8 @@ public class AbilityUtils {
             def[0] = def[0].substring(22);
             return trig;
         }
-        if (def[0].startsWith("CastSA>") && ctb instanceof SpellAbility) {
-            SpellAbility sa = ((SpellAbility) ctb).getHostCard().getCastSA();
+        if (def[0].startsWith("CastSA>")) {
+            SpellAbility sa = ctb.getHostCard().getCastSA();
             if (sa == null) {
                 return ctb;
             }

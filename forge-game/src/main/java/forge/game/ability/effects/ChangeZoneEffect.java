@@ -549,9 +549,7 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
 
             Card movedCard = null;
             Map<AbilityKey, Object> moveParams = AbilityKey.newMap();
-            moveParams.put(AbilityKey.LastStateBattlefield, lastStateBattlefield);
-            moveParams.put(AbilityKey.LastStateGraveyard, lastStateGraveyard);
-            moveParams.put(AbilityKey.InternalTriggerTable, triggerList);
+            AbilityKey.addCardZoneTableParams(moveParams, triggerList);
 
             if (destination.equals(ZoneType.Library)) {
                 // If a card is moved to library from the stack, remove its spells from the stack
@@ -704,10 +702,18 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
             } else {
                 // might set before card is moved only for nontoken
                 if (destination.equals(ZoneType.Exile)) {
+                    if (!gameCard.canExiledBy(sa, true)) {
+                        continue;
+                    }
                     handleExiledWith(gameCard, sa);
                 }
 
                 movedCard = game.getAction().moveTo(destination, gameCard, sa, moveParams);
+
+                if (destination.equals(ZoneType.Exile) && lastStateBattlefield.contains(gameCard) && hostCard.equals(gameCard)) {
+                    // support Parallax Wave returning itself
+                    handleExiledWith(movedCard, sa, lastStateBattlefield.get(gameCard));
+                }
 
                 if (ZoneType.Hand.equals(destination) && ZoneType.Command.equals(originZone.getZoneType())) {
                     StringBuilder sb = new StringBuilder();
@@ -1274,9 +1280,7 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
                 final Zone originZone = game.getZoneOf(c);
                 Map<AbilityKey, Object> moveParams = AbilityKey.newMap();
                 moveParams.put(AbilityKey.FoundSearchingLibrary, searchedLibrary);
-                moveParams.put(AbilityKey.LastStateBattlefield, lastStateBattlefield);
-                moveParams.put(AbilityKey.LastStateGraveyard, lastStateGraveyard);
-                moveParams.put(AbilityKey.InternalTriggerTable, triggerList);
+                AbilityKey.addCardZoneTableParams(moveParams, triggerList);
                 if (destination.equals(ZoneType.Library)) {
                     movedCard = game.getAction().moveToLibrary(c, libraryPos, sa, moveParams);
                 }
@@ -1388,6 +1392,9 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
                     }
                 }
                 else if (destination.equals(ZoneType.Exile)) {
+                    if (!c.canExiledBy(sa, true)) {
+                        continue;
+                    }
                     movedCard = game.getAction().exile(c, sa, moveParams);
 
                     handleExiledWith(movedCard, sa);
@@ -1546,7 +1553,7 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
         Map<AbilityKey,Object> params = AbilityKey.newMap();
         params.put(AbilityKey.StackSa, tgtSA);
         params.put(AbilityKey.StackSi, si);
-        params.put(AbilityKey.InternalTriggerTable, triggerList);
+        AbilityKey.addCardZoneTableParams(params, triggerList);
 
         Card movedCard = null;
         if (srcSA.hasParam("Destination")) {
@@ -1557,6 +1564,9 @@ public class ChangeZoneEffect extends SpellAbilityEffect {
             } else if (srcSA.getParam("Destination").equals("Graveyard")) {
                 movedCard = game.getAction().moveToGraveyard(tgtHost, srcSA, params);
             } else if (srcSA.getParam("Destination").equals("Exile")) {
+                if (!tgtHost.canExiledBy(srcSA, true)) {
+                    return;
+                }
                 movedCard = game.getAction().exile(tgtHost, srcSA, params);
                 handleExiledWith(movedCard, srcSA);
             } else if (srcSA.getParam("Destination").equals("TopOfLibrary")) {
